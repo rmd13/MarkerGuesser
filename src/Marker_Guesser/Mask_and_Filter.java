@@ -41,7 +41,7 @@ public class Mask_and_Filter{
 	public ImagePlus run(String ptype) {//the functino run returns the masked imagePlus//set type is scene or model
 		type = ptype;
 		
-		ImagePlus img = createMask();//working
+		ImagePlus img = createMask();
 		
 		
 		
@@ -62,7 +62,7 @@ public class Mask_and_Filter{
 			//IJ.run(channels[i], "Bandpass Filter...", "filter_large=12 filter_small=2 suppress=None tolerance=5 process");//this might not be necessary
 			Prefs.blackBackground = true;
 			
-			//IJ.run(channels[i], "Convert to Mask", "method=Triangle background=Dark calculate black");
+			IJ.run(channels[i], "Convert to Mask", "method=Triangle background=Dark calculate black");
 			
 			IJ.run(channels[i], "3D object counter...", "threshold=2 slice=35 min.=10 max.=200000 exclude_objects_on_edges statistics");
 			String chan = "";
