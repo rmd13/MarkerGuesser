@@ -8,6 +8,7 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.Macro;
+import ij.Prefs;
 import ij.gui.*;
 
 
@@ -18,6 +19,7 @@ public class MarkerGuesser implements PlugIn {
 	public String dir_path;
 	public String[] marker_names;
 	public int numImages;
+	public int dilate_iter;
 	public void run(String arg) {
 		 //run snt
 
@@ -31,13 +33,14 @@ public class MarkerGuesser implements PlugIn {
 		
 		numImages = Options.getNImages();
 		marker_names = Options.getMarkersforChannels(imageStack1);
+
 		
 		
 		
-		int dilate_iter = Options.getDilateIter();
+		dilate_iter = Options.getDilateIter();
 		Mask_and_Filter filter_model = new Mask_and_Filter(imageStack1, dilate_iter);
 		
-		imageStack1 = filter_model.run("model");
+		imageStack1 = filter_model.run("model", marker_names);
 		//future - Add warning if the directory path is different for second imageStack
 		dir_path = filter_model.getDirPath();		
 		
@@ -52,13 +55,20 @@ public class MarkerGuesser implements PlugIn {
 
 		
 		
-		String results_path = filter_model.getResultsDir()[0];
-		ObjJ_Markers om_model = new ObjJ_Markers(transform, results_path, marker_names[1]);//marker_names[0] = null because thats the cell fill channel
-		om_model.run();
+		String results_path;
+		ObjJ_Markers om_model;
+		int results_index = 0;
 		
-		results_path = filter_model.getResultsDir()[1];
-		om_model = new ObjJ_Markers(transform, results_path, marker_names[2]);
-		om_model.run();
+		
+		
+		for(int i = 0; i < marker_names.length; i ++) {	
+			if(!marker_names[i].contentEquals("cellFill")) {	
+				results_path = filter_model.getResultsDir()[results_index];
+				om_model = new ObjJ_Markers(transform, results_path, marker_names[i]);
+				om_model.run();
+				results_index++;
+			}
+		}
 		
 		
 		//for the future:

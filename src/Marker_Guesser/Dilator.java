@@ -37,7 +37,6 @@ public class Dilator {
 		w = image.getWidth(); 
 		h = image.getHeight();
 		d = image.getStackSize();
-
 		pixels_in = new byte[d][];
 		pixels_out = new byte[d][];
 		for(int z = 0; z < d; z++) {

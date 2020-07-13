@@ -1,22 +1,13 @@
 package Marker_Guesser;
 
-import ij.IJ;
-import ij.plugin.PlugIn;
 import ij.process.ImageProcessor;
-import ij.ImagePlus;
-import ij.CompositeImage;
 import ij.io.Opener;
 import ij.io.OpenDialog;
-import ij.ImageJ;
 import ij.*;
-import ij.Macro;
 import ij.process.*;
 import ij.gui.*;
 import java.awt.*;
 import ij.plugin.*;
-
-import ij.ImageStack;
-import ij.Prefs;
 import ij.gui.GenericDialog;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.ByteProcessor;
@@ -31,6 +22,7 @@ public class Mask_and_Filter{
 	private String type; //scene or model
 	private int dilate_iter = 20;
 	private ImagePlus targ_img;
+	private String[] marker_names;
 	private String[] results_dir = new String[10]; //results directory is an array of strings - each string in the array is the directory for each channel results file - max 10 channels
 	
 	public Mask_and_Filter(ImagePlus atarget, int a_dilate_iter) {
@@ -38,12 +30,12 @@ public class Mask_and_Filter{
 		dilate_iter = a_dilate_iter;
 	}
 	
-	public ImagePlus run(String ptype) {//the functino run returns the masked imagePlus//set type is scene or model
+	public ImagePlus run(String ptype, String[] a_marker_names) {//the functino run returns the masked imagePlus//set type is scene or model
 		type = ptype;
 		
 		ImagePlus img = createMask();
 		
-		
+		marker_names = a_marker_names;
 		
 		ImagePlus targ_img = mask(img);
 		
@@ -58,30 +50,42 @@ public class Mask_and_Filter{
 		//bandpass filter, autothresholding, and 3d obj counting for 2nd and 3rd channel of target image
 		IJ.run("Set 3D Measurements", "nb_of_obj._voxels centroid dots_size=10 font_size=15 store_results_within_a_table_named_after_the_image_(macro_friendly) redirect_to=none");
 		//pass in the correct number of channels
-		for(int i = 1; i < 3; i ++) {
-			//IJ.run(channels[i], "Bandpass Filter...", "filter_large=12 filter_small=2 suppress=None tolerance=5 process");//this might not be necessary
-			Prefs.blackBackground = true;
+		int j = 0;//for results directory
+		for(int i = 0; i < 3; i ++) {
+			if(!marker_names[i].contentEquals("cellFill")) {
+				results_dir[j] = m_dir_path+"chan"+String.valueOf(i+1)+"_"+type+".csv";
+				
+				
+				Prefs.blackBackground = true;
+				channels[i].show();
+				IJ.run(channels[i], "Subtract Background...", "rolling=10 stack");
+				IJ.run(channels[i], "Auto Local Threshold", "method=Median radius=10 parameter_1=-100 parameter_2=0 white stack");
+				//IJ.run(channels[i], "Make Binary", "method=Huang background=Dark calculate black");
+				Prefs.blackBackground = true;
+				//WindowManager.setTempCurrentImage(channels[i]);
+				channels[i].show();
+				String macro = 	"name = getTitle();\n" + 
+					"name = replace(name, \".tif\", \"\");\n" + 
+					"run(\"3D Watershed Split\", \"binary=\"+name+\" seeds=Automatic radius=2\");\n"+
+					"run(\"Make Binary\", \"method=Huang background=Default black\");\n"+
+					"run(\"3D object counter...\", \"threshold=128 slice=15 min.=20 max.=6835500 exclude_objects_on_edges statistics\");";
+				Macro_Runner mr1 = new Macro_Runner();
+				mr1.runMacro(macro, "");
+				IJ.saveAs("Results", results_dir[j]);
+				
+				channels[i].changes = false;
+				channels[i].close();
 			
-			IJ.run(channels[i], "Convert to Mask", "method=Triangle background=Dark calculate black");
 			
-			IJ.run(channels[i], "3D object counter...", "threshold=2 slice=35 min.=10 max.=200000 exclude_objects_on_edges statistics");
-			String chan = "";
-			if(i==1) {
-				chan = "C2";
-				results_dir[0] = m_dir_path+chan+"_"+type+".csv";
-				IJ.saveAs("Results", results_dir[0]);
-			}else if(i==2) {
-				chan = "C3";
-				results_dir[1] = m_dir_path+chan+"_"+type+".csv";
-				IJ.saveAs("Results", results_dir[1]);
+				j++;
 			}
 			
 		}
-
+		/*
 		RGBStackMerge merger = new RGBStackMerge();	//merges the channels back together
 		targ_img = merger.mergeHyperstacks(channels, true);
 		targ_img.show();
-		
+		*/
 		for(int i = 0; i < 3; i ++) { //closes the individual channel imgs
 			channels[i].changes = false;
 			channels[i].close();

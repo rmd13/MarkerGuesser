@@ -10,6 +10,8 @@ import ij.Macro;
 import ij.gui.*;
 
 public class Options {
+	public int celFChan = 0;//cellFill channel
+	
 	public static int getNImages() {	
 		String macro = 	"num = ojNImages();\n	print(num);\n	text = \"\"+num;\n	return text;";
 		Macro_Runner mr1 = new Macro_Runner();
@@ -19,10 +21,8 @@ public class Options {
 	}
 	
 	public static int getDilateIter() {
-		String macro = "Dialog.create(\"Dilate Option\");\r\n" + 
-				"radius = Dialog.getNumber();\r\n" + 
-				"Dialog.addNumber(\"Enter number of pixels to dilate the path as radius\", 15);\r\n" + 
-				"Dialog.show;\r\n" + 
+		String macro = 
+				"radius = getNumber(\"Dilation amount (pixel radius): \", 15);\n"+
 				"string_out = \"\"+radius;\r\n" + 
 				"return string_out;";
 		Macro_Runner mr1 = new Macro_Runner();
@@ -35,15 +35,17 @@ public class Options {
 		int numChannels = img.getNChannels();
 		String[] marker_names = new String[numChannels];
 		
-		for(int i = 1; i < numChannels; i ++) {
+		for(int i = 0; i < numChannels; i ++) {
 			String macro = 	"names = ojGetItemNames();\n	"
 					+ "indv_names = split(names, \" \");\n"
+					+"indv_names = Array.concat(indv_names, \'cellFill\');\n"
 					+ "Dialog.create(\"Channel to marker assignment\");\r\n" + 
-					"  Dialog.addRadioButtonGroup(\"Choose a marker for channel \"+"+i+", indv_names, 3, 1, indv_names[0]);\r\n" + 
+					"  Dialog.addRadioButtonGroup(\"Choose a marker for channel \"+"+(i+1)+", indv_names, 3, 1, indv_names[0]);\r\n" + 
 					"  Dialog.show;\r\n" + 
 					"  return Dialog.getRadioButton;";
 			Macro_Runner mr1 = new Macro_Runner();
 			marker_names[i] = mr1.runMacro(macro, "");
+			//cellFill will always be the last 
 		}
 		return marker_names;
 	}

@@ -30,6 +30,7 @@ public class Mask {
 				for(int z = 0; z < img.getStackSize(); z ++) {
 							//if you want to go from iterating from 0-stacksize, to the composite image, replace z with z*3+1, 2, or 3
 					if(img.getStack().getVoxel(x, y, z)<1) {//the channels are interleaved - channel 1->remainder 0,  channel2->remainder 1, channel3->remainder 2;
+						targ_img.getStack().setVoxel(x, y, z*3, 0.0);//channel 1
 						targ_img.getStack().setVoxel(x, y, z*3+1, 0.0);//channel 2
 						targ_img.getStack().setVoxel(x, y, z*3+2, 0.0);//channel 3
 					}
