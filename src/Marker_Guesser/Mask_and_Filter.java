@@ -58,20 +58,29 @@ public class Mask_and_Filter{
 				
 				Prefs.blackBackground = true;
 				channels[i].show();
-				IJ.run(channels[i], "Subtract Background...", "rolling=10 stack");
+				IJ.run(channels[i], "Enhance Contrast", "saturated=0.35");
+				IJ.run(channels[i], "Apply LUT", "stack");
+				IJ.run(channels[i], "Subtract Background...", "rolling=20 stack");
 				IJ.run(channels[i], "Auto Local Threshold", "method=Median radius=10 parameter_1=-100 parameter_2=0 white stack");
-				//IJ.run(channels[i], "Make Binary", "method=Huang background=Dark calculate black");
-				Prefs.blackBackground = true;
-				//WindowManager.setTempCurrentImage(channels[i]);
+				IJ.run(channels[i], "Make Binary", "method=Huang background=Dark calculate black");
+
 				channels[i].show();
-				String macro = 	"name = getTitle();\n" + 
+				String macro = 	
+					"path = getArgument();"+
+					"name = getTitle();\n" + 
 					"name = replace(name, \".tif\", \"\");\n" + 
 					"run(\"3D Watershed Split\", \"binary=\"+name+\" seeds=Automatic radius=2\");\n"+
-					"run(\"Make Binary\", \"method=Huang background=Default black\");\n"+
-					"run(\"3D object counter...\", \"threshold=128 slice=15 min.=20 max.=6835500 exclude_objects_on_edges statistics\");";
+					"selectWindow(\"Split\");\n"+
+					"run(\"8-bit\");\n"+
+					"run(\"Auto Local Threshold\", \"method=Median radius=10 parameter_1=-100 parameter_2=0 white stack\");\n"+
+					"run(\"3D object counter...\", \"threshold=128 slice=15 min.=50 max.=6835500 exclude_objects_on_edges statistics\");\n"+
+					"saveAs(\"results\", path);\n"+
+					"close(\"Split\");"+
+					"close(\"EDT\");"+
+					"close(\"MAILLY\");";
 				Macro_Runner mr1 = new Macro_Runner();
-				mr1.runMacro(macro, "");
-				IJ.saveAs("Results", results_dir[j]);
+				mr1.runMacro(macro, results_dir[j]);
+				//IJ.saveAs("Results", results_dir[j]);
 				
 				channels[i].changes = false;
 				channels[i].close();

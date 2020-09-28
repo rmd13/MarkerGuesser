@@ -49,17 +49,25 @@ public class Dilator {
 			IJ.showProgress(z, d-1);
 			for(int y = 0; y < h; y++) {
 				for(int x = 0; x < w; x++) {
-					if(get(x, y, z) > threshold ||
-						get(x-1, y, z) > threshold ||
-						get(x+1, y, z) > threshold ||
-						get(x, y-1, z) > threshold ||
-						get(x, y+1, z) > threshold ||
-						get(x, y, z-1) > threshold ||
-						get(x, y, z+1) > threshold)
+					boolean fill = false;
+					if( get(x, y, z) > threshold ||
+							get(x-1, y, z) > threshold ||
+							get(x+1, y, z) > threshold ||
+							get(x, y-1, z) > threshold ||
+							get(x, y+1, z) > threshold ||
+							get(x, y, z-1) > threshold ||
+							get(x, y, z+1) > threshold) {
 
+						fill = true;
+					}else {
+						fill = false;
+					}
+					
+					if(fill == true) {
 						set(x, y, z, 255);
-					else
+					}else {
 						set(x, y, z, 0);
+					}
 				}
 			}
 		}

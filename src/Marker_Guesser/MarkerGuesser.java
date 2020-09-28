@@ -21,9 +21,6 @@ public class MarkerGuesser implements PlugIn {
 	public int numImages;
 	public int dilate_iter;
 	public void run(String arg) {
-		 //run snt
-
-		
 		Macro_Runner m1 = new Macro_Runner();
 		m1.runMacro("ojShowImage(1);run(\"Duplicate...\", \"duplicate\");", "");
 		ImagePlus imageStack1 = WindowManager.getCurrentImage(); //you might want to change the imageStacks to an array so you don't only have the ability to use 2
@@ -42,7 +39,8 @@ public class MarkerGuesser implements PlugIn {
 		
 		imageStack1 = filter_model.run("model", marker_names);
 		//future - Add warning if the directory path is different for second imageStack
-		dir_path = filter_model.getDirPath();		
+		dir_path = filter_model.getDirPath();	
+		
 		
 		
 		//temporary
@@ -64,20 +62,17 @@ public class MarkerGuesser implements PlugIn {
 		for(int i = 0; i < marker_names.length; i ++) {	
 			if(!marker_names[i].contentEquals("cellFill")) {	
 				results_path = filter_model.getResultsDir()[results_index];
-				om_model = new ObjJ_Markers(transform, results_path, marker_names[i]);
+				om_model = new ObjJ_Markers(transform, results_path, marker_names[i], i+1);
 				om_model.run();
 				results_index++;
 			}
 		}
 		
+		new Macro_Runner().runMacro("ojShowImage(1);\n" + 
+				"for(i = ojFirstObject(1); i <= ojLastObject(1); i ++){\n" + 
+				"	ojQualify(i, false);\n" + 
+				"}", "");
 		
-		//for the future:
-				//create loop to loop through all channels
-		/*
-		//add path to c++ program, you will have to compile from vs and put it in the project folder
-		String exec_command = dir_path+"";
-		new Macro_Runner().runMacro("exec(\"help\")", "");
-		*/
 		
 	}
 }

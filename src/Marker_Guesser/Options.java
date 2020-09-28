@@ -20,6 +20,16 @@ public class Options {
 		return nImages;
 	}
 	
+	public static int getSizeofMarker() {	
+		String macro = "diam = getNumber(\"diameter of area around object: \", 15);\n"+
+				"string_out = \"\"+diam;\r\n" + 
+				"return string_out;";
+		Macro_Runner mr1 = new Macro_Runner();
+		String diameter_string = mr1.runMacro(macro, "");
+		int diam = Integer.parseInt(diameter_string);
+		return diam;
+	}
+	
 	public static int getDilateIter() {
 		String macro = 
 				"radius = getNumber(\"Dilation amount (pixel radius): \", 15);\n"+
