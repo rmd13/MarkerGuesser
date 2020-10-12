@@ -1,0 +1,206 @@
+run("Action Bar","/plugins/ActionBar/_ActionbarSA.txt");
+exit();
+
+<line>
+<button>
+label=Register images to first
+icon=noicon
+arg=<macro>
+	showMessage("This one isn't done yet");
+	//doCommand("Register");
+	path = getDir("plugins");
+	string = exec(path+"\\ConsoleApp1");
+	showMessage(string);
+</macro>
+</button>
+
+
+<button>
+label=Toggle Machine-marked objects
+icon=noicon
+arg=<macro>
+	ojShowImage(1);
+	tog = call("ij.Prefs.get", "pre.qual_tog", "this is wrong");
+	lis = call("ij.Prefs.get", "pre.val0", "this is wrong");
+	for(i = ojFirstObject(1); i <= ojLastObject(1); i ++){
+		ojSelectObject(i);
+		obId = ojIndexToId(i);
+	if(tog==false){
+		ojQualify(i, true);
+	}else if(tog==true && lis.contains(toString(obId))){
+		ojQualify(i, false);
+	}
+}
+if(tog==false){
+		call("ij.Prefs.set", "pre.qual_tog", true); //these are for the next time the macro is called
+}else if(tog==true){
+		call("ij.Prefs.set", "pre.qual_tog", false);
+}
+
+</macro>
+</button>
+
+
+<button>
+label=select Marker and ROI
+icon=noicon
+arg=<macro>
+	n = obj_num = getNumber("enter object number: ", 1);
+	run("3D Manager");
+	nb_obj = 0;
+	Ext.Manager3D_Count(nb_obj);
+	if (nb_obj==0){
+		showMessage("There are no regions in the 3d ROI manager");
+	}else{
+		run("3D Manager");
+		Ext.Manager3D_DeselectAll()
+		Ext.Manager3D_MultiSelect();
+		for(i = 0; i < nb_obj; i ++){
+			name = "";
+			Ext.Manager3D_GetName(i, name);
+			name = split(name, "-");
+			if(name[0].contains(n)){
+				Ext.Manager3D_Select(i);
+			}
+		}
+		Ext.Manager3D_MonoSelect();
+	}
+	ojSelectObject(n); 
+	ojShowObject(n);
+</macro>
+</button>
+
+
+
+<button>
+label=Update ObjJ markers
+icon=noicon
+arg=<macro>
+	showMessage("Select location of object marker lists");
+	path = getDir("Location of object marker lists");
+	image_num = getNumber("image number:", 1);
+	ojShowImage(image_num);
+
+	numRows = getValue("results.count");
+	IJ.deleteRows(0,numRows);
+
+	if(is("composite")){
+	}else{
+		row = 0;
+		start = ojFirstObject(image_num);
+		end = ojLastObject(image_num);
+		for (i = start; i <= end; i++, row++) {
+			ojSelectObject(i);
+			name = ojGetItemName();
+			x = ojXPos(1);
+			y = ojYPos(1); 
+			z = ojZPos(1);
+			setResult("X", row, x);
+			setResult("Y", row, y);
+			setResult("Z", row, z);
+		}
+		saveAs("Results", path+"chan1_model.csv");
+	}
+	showMessage("new lists saved in project folder");
+	run("Close");
+</macro>
+</button>
+
+
+</line>
+
+<line>
+<button>
+label=Run Simple Neurite Tracer
+icon=noicon
+arg=<macro>
+	cellfill = getNumber("enter channel number of cell fill", 1);
+	ojShowImage(1);
+	run("Duplicate...", "duplicate channels="+cellfill);
+	run("Simple Neurite Tracer");
+</macro>
+</button>
+
+<button>
+label=Delete objects in image
+icon=noicon
+arg=<macro>
+	image_num = getNumber("image number: ", 1);
+	ojShowImage(image_num);
+	while(ojLastObject(image_num)-ojFirstObject(image_num)>=0){
+		n = ojFirstObject(image_num);
+		ojDeleteObject(n);
+	} 
+</macro>
+</button>
+
+<button>
+label=Identify objects in first image
+icon=noicon
+arg=<macro>
+	ojSetComposite(false);
+	if(ojNObjects()==0){
+		doCommand("MarkerGuesser");	//run("MarkerGuesser");?
+	}else if(ojNObjects()>0){
+		redo = getBoolean("There are already objects marked. Redo and delete all objects in all images?");
+		if(redo == true){
+			ojDeleteAllObjects();
+			doCommand("MarkerGuesser");
+		}
+	}
+	//after, just qualify all of the objects?
+	
+</macro>
+</button>
+
+<button>
+label=Measure Intensity
+icon=noicon
+arg=<macro>
+	ojShowImage(1);
+	marker_channel = getNumber("channel to use to ROI: ", 1);
+	obj_size = getNumber("radius of objs: ", 15);
+
+	num_objs = ojNObjects();
+	height = ojGetImageValue(1, "height") ;
+	width = ojGetImageValue(1, "width") ;
+	stacksize = ojGetImageValue(1, "stacksize") ;
+
+	name = ojGetImageName(1);
+	name = replace(name, ".tif", "");
+
+
+	ojShowImage(1);
+	run("Duplicate...", "duplicate channels="+marker_channel+"");
+	rename("duplicate1");
+	run("8-bit");
+
+	for(n = 1; n <= num_objs; n ++){
+		ojSelectObject(n);
+		ojName = ojGetItemName();
+	
+
+		x = ojXPos(1);
+		y = ojYPos(1); 
+		z = ojZPos(1);
+	
+	
+		if(z%3==marker_channel || (z%3)+3==marker_channel){
+			stack_z = ((z/3));
+			run("3D Draw Shape", "size="+width+","+height+","+(stacksize/3)+" center="+x+","+y+","+stack_z+" radius="+obj_size+","+obj_size+","+obj_size+" vector1=1.0,0.0,0.0 vector2=0.0,1.0,0.0 res_xy=1.000 res_z=1.000 unit=pixels value=255");
+			run("3D Intensity Measure", "objects=Shape3D signal=duplicate1");
+			selectWindow("Shape3D");
+			run("3D Manager");
+			Ext.Manager3D_AddImage();
+			selectWindow("duplicate1");
+			close("\\Others");
+		
+		}
+	}
+	
+
+	selectWindow("Results");
+</macro>
+</button>
+
+</line>
